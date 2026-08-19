@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Security Lab</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2333; --line:#2a3441;
+    --ink:#e6edf3; --muted:#8b98a9; --accent:#3b82f6; --accent2:#38bdf8;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --shield:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 70% -10%,#15263f 0%,var(--bg) 55%); color:var(--ink);
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:28px 20px 80px}
+  header.hero{text-align:center; margin-bottom:26px}
+  .hero h1{font-size:34px; margin:0 0 6px; letter-spacing:-.5px}
+  .hero h1 .lock{color:var(--shield)}
+  .hero p{color:var(--muted); margin:0; font-size:15px}
+  .tag{display:inline-block; font-size:12px; color:var(--accent2); border:1px solid var(--line);
+    padding:3px 10px; border-radius:999px; margin-bottom:12px; background:rgba(56,189,248,.07)}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px;
+    margin:18px 0; box-shadow:0 1px 0 rgba(255,255,255,.02) inset}
+  .card h2{margin:0 0 4px; font-size:19px; display:flex; align-items:center; gap:9px}
+  .card .sub{color:var(--muted); font-size:13.5px; margin:0 0 16px}
+  .badge{font-size:11px; font-weight:600; padding:2px 8px; border-radius:6px; background:var(--panel2); color:var(--muted)}
+
+  .topo{width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:12px}
+  .node{cursor:pointer; transition:transform .15s}
+  .node:hover{filter:brightness(1.2)}
+  .node text{font-size:11px; fill:var(--ink); text-anchor:middle; font-weight:600}
+  .node .role{fill:var(--muted); font-size:9px; font-weight:400}
+  .link{stroke:var(--line); stroke-width:2.5}
+  .link.live{stroke:var(--accent2); stroke-width:3}
+  .info{min-height:44px; margin-top:12px; font-size:13.5px; color:var(--muted)}
+  .info b{color:var(--ink)}
+
+  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0}
+  select,button,input{font-family:inherit; font-size:14px}
+  select,input[type=text]{background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px}
+  button{background:var(--accent); color:#fff; border:none; border-radius:8px; padding:9px 16px;
+    font-weight:600; cursor:pointer; transition:filter .12s}
+  button:hover{filter:brightness(1.1)}
+  button.ghost{background:transparent; border:1px solid var(--line); color:var(--ink)}
+  .rules{list-style:none; padding:0; margin:12px 0 0}
+  .rules li{display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 12px; margin-bottom:7px; font-size:13.5px}
+  .rules .allow{color:var(--ok); font-weight:700}
+  .rules .deny{color:var(--bad); font-weight:700}
+  .rules button{padding:4px 9px; font-size:12px; background:transparent; border:1px solid var(--line); color:var(--muted)}
+  .verdict{margin-top:12px; padding:12px 14px; border-radius:9px; font-size:14px; display:none}
+  .verdict.show{display:block}
+  .verdict.pass{background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.4)}
+  .verdict.block{background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.4)}
+
+  .check{display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--line)}
+  .check:last-child{border-bottom:none}
+  .check input{margin-top:3px; width:17px; height:17px; accent-color:var(--ok)}
+  .check .t{font-size:14px}
+  .check .d{color:var(--muted); font-size:12.5px}
+  .meter{height:10px; border-radius:6px; background:var(--panel2); overflow:hidden; margin:14px 0 4px; border:1px solid var(--line)}
+  .meter i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--bad),var(--warn),var(--ok)); transition:width .35s}
+  .score{font-size:13px; color:var(--muted)}
+
+  .atk{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .atkbtn{background:var(--panel2); border:1px solid var(--line); color:var(--ink); text-align:left;
+    padding:13px 15px; border-radius:10px; cursor:pointer; font-weight:600}
+  .atkbtn small{display:block; color:var(--muted); font-weight:400; font-size:12px; margin-top:3px}
+  .atkbtn:hover{border-color:var(--accent)}
+  .log{background:#05070b; border:1px solid var(--line); border-radius:10px; padding:14px;
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:12.5px; color:#b7c2d0;
+    min-height:80px; margin-top:14px; white-space:pre-wrap}
+  .log .g{color:var(--ok)} .log .r{color:var(--bad)} .log .y{color:var(--warn)} .log .b{color:var(--accent2)}
+
+  .q{margin-bottom:18px}
+  .q p{margin:0 0 9px; font-weight:600; font-size:14.5px}
+  .opt{display:block; width:100%; text-align:left; background:var(--panel2); border:1px solid var(--line);
+    color:var(--ink); border-radius:8px; padding:10px 13px; margin-bottom:7px; cursor:pointer; font-size:13.5px}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{background:rgba(34,197,94,.15); border-color:var(--ok)}
+  .opt.wrong{background:rgba(239,68,68,.15); border-color:var(--bad)}
+  .quizscore{font-size:15px; font-weight:700; margin-top:6px}
+  footer{text-align:center; color:var(--muted); font-size:12.5px; margin-top:30px}
+  @media(max-width:640px){.atk{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">Interactive learning lab</div>
+    <h1><span class="lock">&#128274;</span> Network Security Lab</h1>
+    <p>Click around a small office network and learn how firewalls, VLANs, and hardening keep attackers out.</p>
+  </header>
+
+  <section class="card">
+    <h2>1. The Network <span class="badge">click a device</span></h2>
+    <p class="sub">This is a typical small business network. Tap any device to see its job and its biggest security risk.</p>
+    <svg class="topo" viewBox="0 0 720 300" role="img" aria-label="Network topology">
+      <line class="link" id="l1" x1="90" y1="70" x2="230" y2="70"/>
+      <line class="link" id="l2" x1="290" y1="90" x2="360" y2="150"/>
+      <line class="link" id="l3" x1="360" y1="170" x2="360" y2="150" />
+      <line class="link" id="l4" x1="360" y1="170" x2="200" y2="240"/>
+      <line class="link" id="l5" x1="360" y1="170" x2="360" y2="240"/>
+      <line class="link" id="l6" x1="360" y1="170" x2="520" y2="240"/>
+      <line class="link" id="l7" x1="420" y1="150" x2="620" y2="90"/>
+      <g class="node" data-k="internet">
+        <circle cx="60" cy="70" r="30" fill="#243044"/>
+        <text x="60" y="66">&#127760;</text>
+        <text x="60" y="118">Internet</text>
+        <text x="60" y="131" class="role">untrusted</text>
+      </g>
+      <g class="node" data-k="firewall">
+        <rect x="230" y="45" width="60" height="50" rx="9" fill="#3a2740" stroke="#a78bfa"/>
+        <text x="260" y="76">&#128293;</text>
+        <text x="260" y="118">Firewall</text>
+        <text x="260" y="131" class="role">gatekeeper</text>
+      </g>
+      <g class="node" data-k="switch">
+        <rect x="325" y="150" width="70" height="26" rx="6" fill="#1f3b34" stroke="#22c55e"/>
+        <text x="360" y="168" style="font-size:10px">Switch</text>
+        <text x="360" y="196" class="role">connects LAN</text>
+      </g>
+      <g class="node" data-k="server">
+        <rect x="595" y="60" width="50" height="52" rx="8" fill="#3a3320" stroke="#f59e0b"/>
+        <text x="620" y="92">&#128421;</text>
+        <text x="620" y="130">Web Server</text>
+        <text x="620" y="143" class="role">DMZ</text>
+      </g>
+      <g class="node" data-k="staff">
+        <circle cx="200" cy="255" r="22" fill="#243044"/>
+        <text x="200" y="260">&#128187;</text>
+        <text x="200" y="292">Staff PC</text>
+      </g>
+      <g class="node" data-k="finance">
+        <circle cx="360" cy="255" r="22" fill="#243044"/>
+        <text x="360" y="260">&#128179;</text>
+        <text x="360" y="292">Finance PC</text>
+      </g>
+      <g class="node" data-k="guest">
+        <circle cx="520" cy="255" r="22" fill="#243044"/>
+        <text x="520" y="260">&#128241;</text>
+        <text x="520" y="292">Guest Wi-Fi</text>
+      </g>
+    </svg>
+    <div class="info" id="topoInfo">Nothing selected yet &mdash; click a device above.</div>
+  </section>
+
+  <section class="card">
+    <h2>2. Firewall Rule Builder <span class="badge">simulate traffic</span></h2>
+    <p class="sub">A firewall reads rules <b>top to bottom</b> and stops at the first match. Build a rule set, then send a packet and see if it gets through. Default policy: <b>deny everything not explicitly allowed</b>.</p>
+    <div class="row">
+      <select id="fAction"><option value="allow">ALLOW</option><option value="deny">DENY</option></select>
+      <span>traffic to port</span>
+      <select id="fPort">
+        <option value="443">443 (HTTPS web)</option>
+        <option value="80">80 (HTTP web)</option>
+        <option value="22">22 (SSH admin)</option>
+        <option value="3389">3389 (Remote Desktop)</option>
+        <option value="3306">3306 (Database)</option>
+      </select>
+      <button id="addRule">+ Add rule</button>
+      <button class="ghost" id="loadSafe">Load a safe example</button>
+    </div>
+    <ul class="rules" id="ruleList"></ul>
+    <div class="row" style="margin-top:16px">
+      <b>Send a test packet to port</b>
+      <select id="testPort">
+        <option value="443">443 (HTTPS)</option>
+        <option value="80">80 (HTTP)</option>
+        <option value="22">22 (SSH)</option>
+        <option value="3389">3389 (RDP)</option>
+        <option value="3306">3306 (Database)</option>
+      </select>
+      <button id="sendPacket">Send packet &#9889;</button>
+    </div>
+    <div class="verdict" id="fVerdict"></div>
+  </section>
+
+  <section class="card">
+    <h2>3. Device Hardening Checklist <span class="badge">raise your score</span></h2>
+    <p class="sub">"Hardening" means removing easy ways in. Tick each control you'd apply and watch your defense score climb.</p>
+    <div id="checklist"></div>
+    <div class="meter"><i id="hardBar"></i></div>
+    <div class="score" id="hardScore">Defense score: 0% &mdash; wide open</div>
+  </section>
+
+  <section class="card">
+    <h2>4. Attack Simulator <span class="badge">try to break in</span></h2>
+    <p class="sub">Play the attacker. Your success depends on the hardening controls you ticked above &mdash; go back and change them to see the difference.</p>
+    <div class="atk">
+      <button class="atkbtn" data-atk="scan">Port scan<small>Look for open doors</small></button>
+      <button class="atkbtn" data-atk="brute">Password brute-force<small>Guess the admin login</small></button>
+      <button class="atkbtn" data-atk="phish">Phishing email<small>Trick a staff member</small></button>
+      <button class="atkbtn" data-atk="malware">Malware / ransomware<small>Run a malicious file</small></button>
+    </div>
+    <div class="log" id="atkLog">&gt; Pick an attack above to run it against the network...</div>
+  </section>
+
+  <section class="card">
+    <h2>5. Quick Quiz <span class="badge">5 questions</span></h2>
+    <p class="sub">Test what you picked up. Answers reveal instantly.</p>
+    <div id="quiz"></div>
+    <div class="quizscore" id="quizScore"></div>
+  </section>
+
+  <footer>Built as a hands-on cyber security learning lab &middot; everything runs locally in your browser.</footer>
+</div>
+
+<script>
+const facts = {
+  internet:{t:"Internet",d:"The <b>untrusted zone</b>. Anything can come from here, so it must pass the firewall first. Treat every inbound connection as hostile until proven otherwise."},
+  firewall:{t:"Firewall",d:"The <b>gatekeeper</b> between the internet and your network. It allows or denies traffic based on rules. This is your single most important defensive device."},
+  switch:{t:"Switch",d:"Connects all internal devices. Its security job is <b>segmentation</b> &mdash; using VLANs so the Guest Wi-Fi can't reach the Finance PC."},
+  server:{t:"Web Server (DMZ)",d:"Public-facing, so it lives in a <b>DMZ</b> &mdash; a buffer zone. If it's hacked, the attacker still can't reach the internal LAN directly."},
+  staff:{t:"Staff PC",d:"The most common entry point. Most breaches start with a <b>phishing email</b> or a weak password on a regular user's machine."},
+  finance:{t:"Finance PC",d:"High-value target holding money and records. Should be on its <b>own VLAN</b> with strict access and multi-factor authentication."},
+  guest:{t:"Guest Wi-Fi",d:"Visitors' devices you don't control. Must be <b>isolated</b> on a separate network so it can reach the internet but nothing internal."}
+};
+const linkMap={internet:['l1'],firewall:['l1','l2'],switch:['l2','l7'],server:['l7'],staff:['l4'],finance:['l5'],guest:['l6']};
+document.querySelectorAll('.node').forEach(n=>{
+  n.addEventListener('click',()=>{
+    const k=n.dataset.k, f=facts[k];
+    document.getElementById('topoInfo').innerHTML='<b>'+f.t+'</b> &mdash; '+f.d;
+    document.querySelectorAll('.link').forEach(l=>l.classList.remove('live'));
+    (linkMap[k]||[]).forEach(id=>document.getElementById(id).classList.add('live'));
+  });
+});
+
+let rules=[];
+const portName={443:"HTTPS",80:"HTTP",22:"SSH",3389:"RDP",3306:"Database"};
+function renderRules(){
+  const ul=document.getElementById('ruleList'); ul.innerHTML='';
+  if(!rules.length){ul.innerHTML='<li style="color:var(--muted);justify-content:center">No rules yet. Everything is denied by default.</li>';return;}
+  rules.forEach((r,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML='<span><b>'+(i+1)+'.</b> <span class="'+r.action+'">'+r.action.toUpperCase()+'</span> port '+r.port+' &nbsp;<span style="color:var(--muted)">('+portName[r.port]+')</span></span>';
+    const b=document.createElement('button'); b.textContent='remove';
+    b.onclick=()=>{rules.splice(i,1);renderRules();};
+    li.appendChild(b); ul.appendChild(li);
+  });
+}
+document.getElementById('addRule').onclick=()=>{
+  rules.push({action:document.getElementById('fAction').value,port:document.getElementById('fPort').value});
+  renderRules();
+};
+document.getElementById('loadSafe').onclick=()=>{
+  rules=[{action:'allow',port:'443'},{action:'deny',port:'3389'},{action:'deny',port:'3306'}];
+  renderRules();
+};
+document.getElementById('sendPacket').onclick=()=>{
+  const port=document.getElementById('testPort').value;
+  const match=rules.find(r=>r.port===port);
+  const v=document.getElementById('fVerdict'); v.className='verdict show';
+  if(match&&match.action==='allow'){
+    v.classList.add('pass');
+    v.innerHTML='&#9989; <b>ALLOWED</b> &mdash; a rule explicitly permits port '+port+' ('+portName[port]+'). The packet reaches the network.';
+  }else if(match&&match.action==='deny'){
+    v.classList.add('block');
+    v.innerHTML='&#128683; <b>BLOCKED</b> &mdash; a rule explicitly denies port '+port+' ('+portName[port]+'). Good &mdash; you closed that door.';
+  }else{
+    v.classList.add('block');
+    v.innerHTML='&#128683; <b>BLOCKED by default</b> &mdash; no rule matches port '+port+' ('+portName[port]+'), so the firewall default-deny policy stops it. This is exactly why default-deny is safer than default-allow.';
+  }
+};
+renderRules();
+
+const controls=[
+  {t:"Strong, unique passwords + a password manager",d:"Stops most guessing and credential-reuse attacks.",w:2,k:'pw'},
+  {t:"Multi-factor authentication (MFA)",d:"Even a stolen password is useless without the second factor.",w:2,k:'mfa'},
+  {t:"Keep software patched & updated",d:"Closes known holes attackers scan for.",w:2,k:'patch'},
+  {t:"Least privilege (users aren't admins)",d:"Limits how far an attacker or malware can spread.",w:1,k:'priv'},
+  {t:"Antivirus / endpoint protection",d:"Detects and blocks known malware.",w:1,k:'av'},
+  {t:"Regular offline backups",d:"Your safety net against ransomware.",w:2,k:'backup'}
+];
+const state={};
+function renderCheck(){
+  const c=document.getElementById('checklist'); c.innerHTML='';
+  controls.forEach(x=>{
+    const row=document.createElement('label'); row.className='check';
+    row.innerHTML='<input type="checkbox"><span><span class="t">'+x.t+'</span><br><span class="d">'+x.d+'</span></span>';
+    row.querySelector('input').onchange=e=>{state[x.k]=e.target.checked;updateScore();};
+    c.appendChild(row);
+  });
+}
+function updateScore(){
+  const max=controls.reduce((a,x)=>a+x.w,0);
+  const got=controls.reduce((a,x)=>a+(state[x.k]?x.w:0),0);
+  const pct=Math.round(got/max*100);
+  document.getElementById('hardBar').style.width=pct+'%';
+  let label= pct===0?'wide open':pct<40?'weak':pct<75?'getting there':pct<100?'solid':'well hardened!';
+  document.getElementById('hardScore').textContent='Defense score: '+pct+'% - '+label;
+}
+renderCheck(); updateScore();
+
+function log(html){document.getElementById('atkLog').innerHTML=html;}
+const attacks={
+  scan(){
+    let s='&gt; Scanning ports on the network...\n';
+    s+='&gt; <span class="b">443 open</span>, 22 filtered by firewall\n';
+    if(!state.patch){s+='&gt; <span class="r">Found an unpatched service on 445! This is the crack I need.</span>';}
+    else{s+='&gt; <span class="g">Everything patched and filtered. Nothing exploitable found. Attack stalls.</span>';}
+    log(s);
+  },
+  brute(){
+    let s='&gt; Trying common passwords against the admin login...\n';
+    if(state.pw&&state.mfa){s+='&gt; password123... nope\n&gt; <span class="g">Strong password blocks guessing, and MFA asks for a code I do not have. Locked out.</span>';}
+    else if(state.mfa){s+='&gt; <span class="y">Guessed the weak password!</span>\n&gt; <span class="g">...but MFA demands a second code. Blocked anyway.</span>';}
+    else if(state.pw){s+='&gt; 10,000 guesses... <span class="g">strong password holds. No luck.</span>';}
+    else{s+='&gt; admin / admin... <span class="r">ACCESS GRANTED. Weak password, no MFA. I am in.</span>';}
+    log(s);
+  },
+  phish(){
+    let s='&gt; Sending a fake password reset email to Staff PC...\n&gt; <span class="y">Employee clicks the link and enters their password.</span>\n';
+    if(state.mfa){s+='&gt; <span class="g">I have their password, but MFA blocks me without the second factor.</span>';}
+    else if(state.priv){s+='&gt; <span class="y">Logged in as the user - but they are not an admin, so I cannot go far.</span>';}
+    else{s+='&gt; <span class="r">Full admin access with no MFA. Game over for the network.</span>';}
+    s+='\n&gt; <span class="b">Lesson: technology helps, but training users not to click is the real fix.</span>';
+    log(s);
+  },
+  malware(){
+    let s='&gt; Staff member runs a malicious attachment...\n';
+    if(state.av)s+='&gt; <span class="g">Antivirus quarantines the file on execution.</span>\n';
+    if(!state.av&&state.priv)s+='&gt; <span class="y">Malware runs but the user is not admin - it cannot infect the whole system.</span>\n';
+    if(!state.av&&!state.priv)s+='&gt; <span class="r">Ransomware encrypts everything. Files locked!</span>\n';
+    if(state.backup)s+='&gt; <span class="g">Offline backups exist - wipe, restore, and you lose almost nothing.</span>';
+    else s+='&gt; <span class="r">No backups. This data may be gone for good.</span>';
+    log(s);
+  }
+};
+document.querySelectorAll('.atkbtn').forEach(b=>b.onclick=()=>attacks[b.dataset.atk]());
+
+const quiz=[
+  {q:"A firewall's default policy should usually be...",a:["Allow everything, block known-bad","Deny everything not explicitly allowed","Ask the user each time"],c:1},
+  {q:"Why put a public web server in a DMZ?",a:["It runs faster there","So if it's hacked, attackers still can't reach the internal LAN","DMZ servers can't be hacked"],c:1},
+  {q:"Which single control best stops a stolen password from being used?",a:["A longer password","Multi-factor authentication (MFA)","Antivirus"],c:1},
+  {q:"Most real-world breaches start with...",a:["Genius hackers cracking encryption","Phishing or a weak/reused password","Physically stealing the server"],c:1},
+  {q:"Your best defense against ransomware is...",a:["Paying quickly","Regular offline backups","Turning the PC off and on"],c:1}
+];
+let answered=0, correct=0;
+function renderQuiz(){
+  const box=document.getElementById('quiz');
+  quiz.forEach((item,qi)=>{
+    const d=document.createElement('div'); d.className='q';
+    d.innerHTML='<p>'+(qi+1)+'. '+item.q+'</p>';
+    item.a.forEach((opt,oi)=>{
+      const b=document.createElement('button'); b.className='opt'; b.textContent=opt;
+      b.onclick=()=>{
+        if(d.dataset.done)return; d.dataset.done=1; answered++;
+        if(oi===item.c){b.classList.add('correct');correct++;}
+        else{b.classList.add('wrong'); d.querySelectorAll('.opt')[item.c].classList.add('correct');}
+        document.getElementById('quizScore').textContent='Score: '+correct+' / '+answered+(answered===quiz.length?'  - all done!':'');
+      };
+      d.appendChild(b);
+    });
+    box.appendChild(d);
+  });
+}
+renderQuiz();
+</script>
+</body>
+</html>
