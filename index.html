@@ -147,7 +147,7 @@
         <text x="520" y="292">Guest Wi-Fi</text>
       </g>
     </svg>
-    <div class="info" id="topoInfo">Nothing selected yet &mdash; click a device above.</div>
+    <div class="info" id="topoInfo">Nothing selected yet - click a device above.</div>
   </section>
 
   <section class="card">
@@ -186,12 +186,12 @@
     <p class="sub">"Hardening" means removing easy ways in. Tick each control you'd apply and watch your defense score climb.</p>
     <div id="checklist"></div>
     <div class="meter"><i id="hardBar"></i></div>
-    <div class="score" id="hardScore">Defense score: 0% &mdash; wide open</div>
+    <div class="score" id="hardScore">Defense score: 0% - wide open</div>
   </section>
 
   <section class="card">
     <h2>4. Attack Simulator <span class="badge">try to break in</span></h2>
-    <p class="sub">Play the attacker. Your success depends on the hardening controls you ticked above &mdash; go back and change them to see the difference.</p>
+    <p class="sub">Play the attacker. Your success depends on the hardening controls you ticked above - go back and change them to see the difference.</p>
     <div class="atk">
       <button class="atkbtn" data-atk="scan">Port scan<small>Look for open doors</small></button>
       <button class="atkbtn" data-atk="brute">Password brute-force<small>Guess the admin login</small></button>
@@ -215,8 +215,8 @@
 const facts = {
   internet:{t:"Internet",d:"The <b>untrusted zone</b>. Anything can come from here, so it must pass the firewall first. Treat every inbound connection as hostile until proven otherwise."},
   firewall:{t:"Firewall",d:"The <b>gatekeeper</b> between the internet and your network. It allows or denies traffic based on rules. This is your single most important defensive device."},
-  switch:{t:"Switch",d:"Connects all internal devices. Its security job is <b>segmentation</b> &mdash; using VLANs so the Guest Wi-Fi can't reach the Finance PC."},
-  server:{t:"Web Server (DMZ)",d:"Public-facing, so it lives in a <b>DMZ</b> &mdash; a buffer zone. If it's hacked, the attacker still can't reach the internal LAN directly."},
+  switch:{t:"Switch",d:"Connects all internal devices. Its security job is <b>segmentation</b> - using VLANs so the Guest Wi-Fi can't reach the Finance PC."},
+  server:{t:"Web Server (DMZ)",d:"Public-facing, so it lives in a <b>DMZ</b> - a buffer zone. If it's hacked, the attacker still can't reach the internal LAN directly."},
   staff:{t:"Staff PC",d:"The most common entry point. Most breaches start with a <b>phishing email</b> or a weak password on a regular user's machine."},
   finance:{t:"Finance PC",d:"High-value target holding money and records. Should be on its <b>own VLAN</b> with strict access and multi-factor authentication."},
   guest:{t:"Guest Wi-Fi",d:"Visitors' devices you don't control. Must be <b>isolated</b> on a separate network so it can reach the internet but nothing internal."}
@@ -225,7 +225,7 @@ const linkMap={internet:['l1'],firewall:['l1','l2'],switch:['l2','l7'],server:['
 document.querySelectorAll('.node').forEach(n=>{
   n.addEventListener('click',()=>{
     const k=n.dataset.k, f=facts[k];
-    document.getElementById('topoInfo').innerHTML='<b>'+f.t+'</b> &mdash; '+f.d;
+    document.getElementById('topoInfo').innerHTML='<b>'+f.t+'</b> - '+f.d;
     document.querySelectorAll('.link').forEach(l=>l.classList.remove('live'));
     (linkMap[k]||[]).forEach(id=>document.getElementById(id).classList.add('live'));
   });
@@ -258,13 +258,13 @@ document.getElementById('sendPacket').onclick=()=>{
   const v=document.getElementById('fVerdict'); v.className='verdict show';
   if(match&&match.action==='allow'){
     v.classList.add('pass');
-    v.innerHTML='&#9989; <b>ALLOWED</b> &mdash; a rule explicitly permits port '+port+' ('+portName[port]+'). The packet reaches the network.';
+    v.innerHTML='&#9989; <b>ALLOWED</b> - a rule explicitly permits port '+port+' ('+portName[port]+'). The packet reaches the network.';
   }else if(match&&match.action==='deny'){
     v.classList.add('block');
-    v.innerHTML='&#128683; <b>BLOCKED</b> &mdash; a rule explicitly denies port '+port+' ('+portName[port]+'). Good &mdash; you closed that door.';
+    v.innerHTML='&#128683; <b>BLOCKED</b> - a rule explicitly denies port '+port+' ('+portName[port]+'). Good - you closed that door.';
   }else{
     v.classList.add('block');
-    v.innerHTML='&#128683; <b>BLOCKED by default</b> &mdash; no rule matches port '+port+' ('+portName[port]+'), so the firewall default-deny policy stops it. This is exactly why default-deny is safer than default-allow.';
+    v.innerHTML='&#128683; <b>BLOCKED by default</b> - no rule matches port '+port+' ('+portName[port]+'), so the firewall default-deny policy stops it. This is exactly why default-deny is safer than default-allow.';
   }
 };
 renderRules();
