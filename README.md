@@ -10,7 +10,7 @@ An interactive, browser-based cyber security learning lab. Open it and click aro
 2. **Firewall Rule Builder** add allow/deny rules and send test packets to see the firewall decide. Demonstrates why a *default-deny* policy is safer than default-allow.
 3. **Device Hardening Checklist** tick real controls (MFA, patching, least privilege, backups…) and watch a defense score rise.
 4. **Attack Simulator** play the attacker: port scan, password brute-force, phishing, and malware/ransomware. Whether each attack succeeds depends on the hardening controls you ticked, so it rewards improving your defenses.
-5. **Quick Quiz** — five questions with instant feedback.
+5. **Quick Quiz** five questions with instant feedback.
 
 ## Concepts covered
 
